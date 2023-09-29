@@ -1,0 +1,9 @@
+FROM wordpress:latest
+
+#install dependencies
+RUN apt update && \
+    apt upgrade -y &&
+    apt install -y \
+    vim \
+    wget \
+    mariadb-client

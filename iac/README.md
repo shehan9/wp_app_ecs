@@ -1,0 +1,1 @@
+## This folder contains aws cdk code for ECS and infra.
