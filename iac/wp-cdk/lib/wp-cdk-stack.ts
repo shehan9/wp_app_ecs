@@ -48,7 +48,8 @@ export class WpCdkStack extends cdk.Stack {
 
     const container = taskDefinition.addContainer('wp-container', {
       image: ecs.ContainerImage.fromRegistry('wordpress:latest'),
-      memoryLimitMiB: 256,
+      memoryLimitMiB: 512,
+      cpu: 256,
     });
 
     container.addPortMappings({
@@ -79,22 +80,37 @@ export class WpCdkStack extends cdk.Stack {
     }); //This is not needed*/
 
     // ALB configs
+    const albsg = new ec2.SecurityGroup(this, 'wp-app-alb-sg', {
+      vpc: vpc,
+      description: 'allow 80',
+      allowAllOutbound: true,
+    });
+    albsg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'allow 80 inbound');
+
+
     const lb = new elbv2.ApplicationLoadBalancer(this, 'wp-app-alb', {
       vpc: vpc,
-      internetFacing: true
+      internetFacing: true,
+      securityGroup: albsg,
     });
 
     const listener = lb.addListener('Listener', {
       port: 80,
+      open: true,
     });
 
     listener.addTargets('Target', {
       port: 80,
       targets: [service],
-      healthCheck: { path: '/' }
+      healthCheck: { 
+        path: '/',
+        port: '80',
+        interval: cdk.Duration.seconds(60),
+        timeout: cdk.Duration.seconds(30),
+      }
     });
 
-    listener.connections.allowDefaultPortFromAnyIpv4('Open to the world');
+    //listener.connections.allowDefaultPortFromAnyIpv4('Open to the world');
 
   }
 }
