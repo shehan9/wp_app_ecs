@@ -103,7 +103,7 @@ export class WpCdkStack extends cdk.Stack {
       port: 80,
       targets: [service],
       healthCheck: { 
-        path: '/',
+        path: '/wp-admin/setup-config.php',
         port: '80',
         interval: cdk.Duration.seconds(60),
         timeout: cdk.Duration.seconds(30),
