@@ -54,7 +54,7 @@ export class WpCdkStack extends cdk.Stack {
 
     const autoScalingGroup = new autoscaling.AutoScalingGroup(this, 'ASG', {
       vpc,
-      instanceType: new ec2.InstanceType('t3.medium '),
+      instanceType: new ec2.InstanceType('t3.medium'),
       machineImage: ecs.EcsOptimizedImage.amazonLinux2(),
       minCapacity: 0,
       desiredCapacity: 1,
@@ -74,8 +74,8 @@ export class WpCdkStack extends cdk.Stack {
 
     const container = taskDefinition.addContainer('wp-container', {
       image: ecs.ContainerImage.fromRegistry('wordpress:latest'),
-      memoryLimitMiB: 512,
-      cpu: 256,
+      memoryLimitMiB: 1024,
+    //  cpu: 256,
       environment: { 
         'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
