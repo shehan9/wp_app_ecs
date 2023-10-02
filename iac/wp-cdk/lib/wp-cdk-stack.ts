@@ -84,13 +84,17 @@ export class WpCdkStack extends cdk.Stack {
     const container = taskDefinition.addContainer('wp-container', {
       image: image, //ecs.ContainerImage.fromRegistry('177807608173.dkr.ecr.us-east-1.amazonaws.com/wp_docker_image:latest'),
       memoryLimitMiB: 1024,
-    //  cpu: 256,
-      environment: { 
-        'WORDPRESS_DB_HOST': rds_host.stringValue,
+      cpu: 512,
+      logging: ecs.LogDriver.awsLogs({
+        streamPrefix: 'wp-app-log', 
+        logRetention: 30,
+      }), //aws_logs(stream_prefix = "mwservice", log_group=logDetail),
+/*      environment: { 
+      'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
         'WORDPRESS_DB_PASSWORD': rds_password.stringValue,
         'WORDPRESS_DB_NAME': 'wp_db',
-      },
+      }, */
     });
 
     container.addPortMappings({
@@ -100,6 +104,7 @@ export class WpCdkStack extends cdk.Stack {
     //ECS service
     const sg_service = new ec2.SecurityGroup(this, 'wp-app-ecs-sg', { vpc: vpc });
     sg_service.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(80));
+    sg_service.addIngressRule(ec2.Peer.ipv4('0.0.0.0/0'), ec2.Port.tcp(443));
 
     const service = new ecs.Ec2Service(this, 'wp-app-ecs-svc', { 
       cluster: cluster, 
@@ -123,11 +128,11 @@ export class WpCdkStack extends cdk.Stack {
     // ALB configs
     const albsg = new ec2.SecurityGroup(this, 'wp-app-alb-sg', {
       vpc: vpc,
-      description: 'allow 80',
+      description: 'allow 80 and 443',
       allowAllOutbound: true,
     });
     albsg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'allow 80 inbound');
-
+    albsg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(443), 'allow 443 inbound');
 
     const lb = new elbv2.ApplicationLoadBalancer(this, 'wp-app-alb', {
       vpc: vpc,
