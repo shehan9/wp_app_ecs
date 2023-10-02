@@ -3,7 +3,9 @@ FROM wordpress:latest
 #install dependencies
 RUN apt update && \
     apt upgrade -y && \
-    apt install -y \
-    vim \
-    wget \
-    mariadb-client
+    apt install -y telnet
+
+WORKDIR /var/www/html
+
+COPY ./images/ ./wp-content/myimages/
+RUN chmod -R 755 ./wp-content/myimages/

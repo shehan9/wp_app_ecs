@@ -37,6 +37,11 @@ export class WpCdkStack extends cdk.Stack {
       value: rds_host.stringValue
     });   cdk deploy --outputs-file ./temp-cdk-outputs.json */
 
+    //Getting bitbucket 
+    console.log('BITBUCKET_BUILD_NUMBER', process.env.BITBUCKET_BUILD_NUMBER);
+
+
+
     //VPC 
     const vpc = new ec2.Vpc(this, "wp-app-vpc", {
       cidr: "10.1.0.0/16",
@@ -74,7 +79,7 @@ export class WpCdkStack extends cdk.Stack {
     //const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',); // testing default network mode bridge
 
     const imageRepo = ecr.Repository.fromRepositoryName(this, 'Repo', 'wp_docker_image');
-    const tag = 'latest';
+    const tag = process.env.BITBUCKET_BUILD_NUMBER;
     const image = ecs.ContainerImage.fromEcrRepository(imageRepo, tag)
 
     new cdk.CfnOutput(this, 'ecr-image', {
@@ -109,7 +114,7 @@ export class WpCdkStack extends cdk.Stack {
     const service = new ecs.Ec2Service(this, 'wp-app-ecs-svc', { 
       cluster: cluster, 
       taskDefinition: taskDefinition,
-      desiredCount: 1,
+      desiredCount: 2,
       securityGroups: [sg_service],
      });
 
