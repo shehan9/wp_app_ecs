@@ -8,6 +8,7 @@ import * as ecs_patterns from 'aws-cdk-lib/aws-ecs-patterns';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Duration } from 'aws-cdk-lib';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 
 export class WpCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -72,16 +73,24 @@ export class WpCdkStack extends cdk.Stack {
 
     //const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',); // testing default network mode bridge
 
+    const imageRepo = ecr.Repository.fromRepositoryName(this, 'Repo', 'wp_docker_image');
+    const tag = 'latest';
+    const image = ecs.ContainerImage.fromEcrRepository(imageRepo, tag)
+
+    new cdk.CfnOutput(this, 'ecr-image', {
+      value: image.imageName
+    }); 
+
     const container = taskDefinition.addContainer('wp-container', {
-      image: ecs.ContainerImage.fromRegistry('wordpress:latest'),
+      image: image, //ecs.ContainerImage.fromRegistry('177807608173.dkr.ecr.us-east-1.amazonaws.com/wp_docker_image:latest'),
       memoryLimitMiB: 1024,
     //  cpu: 256,
-      environment: { 
+ /*     environment: { 
         'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
         'WORDPRESS_DB_PASSWORD': rds_password.stringValue,
         'WORDPRESS_DB_NAME': 'wp_db',
-      },
+      }, */
     });
 
     container.addPortMappings({
