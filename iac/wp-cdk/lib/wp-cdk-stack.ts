@@ -89,12 +89,12 @@ export class WpCdkStack extends cdk.Stack {
         streamPrefix: 'wp-app-log', 
         logRetention: 30,
       }), //aws_logs(stream_prefix = "mwservice", log_group=logDetail),
-/*      environment: { 
-      'WORDPRESS_DB_HOST': rds_host.stringValue,
+      environment: { 
+        'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
         'WORDPRESS_DB_PASSWORD': rds_password.stringValue,
         'WORDPRESS_DB_NAME': 'wp_db',
-      }, */
+      },
     });
 
     container.addPortMappings({
@@ -149,7 +149,7 @@ export class WpCdkStack extends cdk.Stack {
       port: 80,
       targets: [service],
       healthCheck: { 
-        path: '/wp-admin/setup-config.php',
+        path: '/license.txt', // previuos value -> '/wp-admin/setup-config.php',
         port: '80',
         interval: cdk.Duration.seconds(60),
         timeout: cdk.Duration.seconds(30),
