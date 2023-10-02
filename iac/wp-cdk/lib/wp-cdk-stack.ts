@@ -14,7 +14,7 @@ export class WpCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // SSM Parameters
+    // Reading SSM Parameters for RDS credentials
     const rds_host = ssm.StringParameter.fromStringParameterAttributes(
       this,
       'rds_host',
@@ -37,12 +37,10 @@ export class WpCdkStack extends cdk.Stack {
       value: rds_host.stringValue
     });   cdk deploy --outputs-file ./temp-cdk-outputs.json */
 
-    //Getting bitbucket 
+    //console output for BITBUCKET_BUILD_NUMBER which uses as docker tag
     console.log('BITBUCKET_BUILD_NUMBER', process.env.BITBUCKET_BUILD_NUMBER);
 
-
-
-    //VPC 
+    //Creating VPC 
     const vpc = new ec2.Vpc(this, "wp-app-vpc", {
       cidr: "10.1.0.0/16",
       natGateways: 1,
@@ -76,7 +74,6 @@ export class WpCdkStack extends cdk.Stack {
    const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',{
       networkMode: ecs.NetworkMode.AWS_VPC,
     });
-    //const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',); // testing default network mode bridge
 
     const imageRepo = ecr.Repository.fromRepositoryName(this, 'Repo', 'wp_docker_image');
     const tag = process.env.BITBUCKET_BUILD_NUMBER;
@@ -87,13 +84,13 @@ export class WpCdkStack extends cdk.Stack {
     }); 
 
     const container = taskDefinition.addContainer('wp-container', {
-      image: image, //ecs.ContainerImage.fromRegistry('177807608173.dkr.ecr.us-east-1.amazonaws.com/wp_docker_image:latest'),
+      image: image,
       memoryLimitMiB: 1024,
       cpu: 512,
       logging: ecs.LogDriver.awsLogs({
         streamPrefix: 'wp-app-log', 
         logRetention: 30,
-      }), //aws_logs(stream_prefix = "mwservice", log_group=logDetail),
+      }),
       environment: { 
         'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
@@ -117,18 +114,6 @@ export class WpCdkStack extends cdk.Stack {
       desiredCount: 2,
       securityGroups: [sg_service],
      });
-
-    // AutoScaling policy
-/*    const scaling = service.autoScaleTaskCount({ maxCapacity: 2, minCapacity: 1 });
-    scaling.scaleOnCpuUtilization('CpuScaling', {
-      targetUtilizationPercent: 50,
-      scaleInCooldown: Duration.seconds(60),
-      scaleOutCooldown: Duration.seconds(60)
-    }); */
-
-/*    cluster.addCapacity('DefaultAutoScalingGroup', {
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO)
-    }); //This is not needed*/
 
     // ALB configs
     const albsg = new ec2.SecurityGroup(this, 'wp-app-alb-sg', {
@@ -156,12 +141,12 @@ export class WpCdkStack extends cdk.Stack {
       healthCheck: { 
         path: '/license.txt', // previuos value -> '/wp-admin/setup-config.php',
         port: '80',
-        interval: cdk.Duration.seconds(60),
-        timeout: cdk.Duration.seconds(30),
+        interval: cdk.Duration.seconds(30),
+        timeout: cdk.Duration.seconds(15),
+        unhealthyThresholdCount: 5,
+        healthyThresholdCount: 2,
       }
     });
-
-    //listener.connections.allowDefaultPortFromAnyIpv4('Open to the world');
 
   }
 }
