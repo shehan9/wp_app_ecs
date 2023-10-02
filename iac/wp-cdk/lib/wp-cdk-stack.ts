@@ -40,9 +40,10 @@ export class WpCdkStack extends cdk.Stack {
     //VPC 
     const vpc = new ec2.Vpc(this, "wp-app-vpc", {
       cidr: "10.1.0.0/16",
-
+      natGateways: 1,
       subnetConfiguration: [
         {  cidrMask: 24, subnetType: ec2.SubnetType.PUBLIC, name: "Public" },
+        {  cidrMask: 24, subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS  , name: "Private" }
         ],
       maxAzs: 3 // Default is all AZs in region
       
@@ -67,10 +68,9 @@ export class WpCdkStack extends cdk.Stack {
     });
     cluster.addAsgCapacityProvider(capacityProvider);
 
-    const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',{
+   const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',{
       networkMode: ecs.NetworkMode.AWS_VPC,
     });
-
     //const taskDefinition = new ecs.Ec2TaskDefinition(this, 'wp-app-task-def',); // testing default network mode bridge
 
     const imageRepo = ecr.Repository.fromRepositoryName(this, 'Repo', 'wp_docker_image');
@@ -85,12 +85,12 @@ export class WpCdkStack extends cdk.Stack {
       image: image, //ecs.ContainerImage.fromRegistry('177807608173.dkr.ecr.us-east-1.amazonaws.com/wp_docker_image:latest'),
       memoryLimitMiB: 1024,
     //  cpu: 256,
- /*     environment: { 
+      environment: { 
         'WORDPRESS_DB_HOST': rds_host.stringValue,
         'WORDPRESS_DB_USER' : rds_username.stringValue,
         'WORDPRESS_DB_PASSWORD': rds_password.stringValue,
         'WORDPRESS_DB_NAME': 'wp_db',
-      }, */
+      },
     });
 
     container.addPortMappings({
