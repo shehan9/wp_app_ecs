@@ -1,11 +1,12 @@
 FROM wordpress:latest
 
-#install dependencies
+#install dependencies.
 RUN apt update && \
     apt upgrade -y && \
     apt install -y telnet
 
 WORKDIR /var/www/html
 
+#copy images folder
 COPY ./images/ ./wp-content/myimages/
 RUN chmod -R 755 ./wp-content/myimages/
