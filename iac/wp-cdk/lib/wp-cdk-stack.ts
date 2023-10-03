@@ -37,7 +37,7 @@ export class WpCdkStack extends cdk.Stack {
       value: rds_host.stringValue
     });   cdk deploy --outputs-file ./temp-cdk-outputs.json */
 
-    //console output for BITBUCKET_BUILD_NUMBER which uses as docker tag
+    //console output for BITBUCKET_BUILD_NUMBER which uses as docker tag.
     console.log('BITBUCKET_BUILD_NUMBER', process.env.BITBUCKET_BUILD_NUMBER);
 
     //Creating VPC 
