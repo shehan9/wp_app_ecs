@@ -97,6 +97,9 @@ export class WpCdkStack extends cdk.Stack {
         'WORDPRESS_DB_PASSWORD': rds_password.stringValue,
         'WORDPRESS_DB_NAME': 'wp_db',
       },
+      healthCheck: {
+        command: [ "CMD-SHELL", "curl -f http://localhost/license.txt || exit 1" ],
+      },
     });
 
     container.addPortMappings({
